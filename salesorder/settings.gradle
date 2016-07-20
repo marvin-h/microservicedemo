@@ -1,0 +1,3 @@
+include 'salesorder-api'
+include 'salesorder-srv'
+include 'salesorder-web'

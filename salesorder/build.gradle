@@ -1,0 +1,16 @@
+subprojects{
+apply plugin: 'java'
+apply plugin: 'eclipse'
+repositories {
+	mavenCentral()
+}
+dependencies {
+	testCompile group: 'junit', name: 'junit', version: junitVersion
+}
+task createJavaDirs << {
+	sourceSets*.java.srcDirs*.each { it.mkdirs() }
+	sourceSets*.resources.srcDirs*.each { it.mkdirs() }
+}
+
+}
+task startup << {}

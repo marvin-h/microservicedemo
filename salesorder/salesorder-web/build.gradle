@@ -1,0 +1,28 @@
+import org.gradle.plugins.ide.eclipse.model.Facet
+apply plugin: 'war'
+apply plugin: 'eclipse-wtp'
+dependencies {
+	compile project(':salesorder-api')
+	compile project(':salesorder-srv')
+	compile group: 'org.springframework', name: 'spring-web', version: springVersion
+	compile group: 'org.jboss.resteasy', name: 'resteasy-spring', version: resteasyVersion
+	compile group: 'org.jboss.resteasy', name: 'resteasy-jackson2-provider', version: resteasyVersion
+}
+eclipse {
+	wtp {
+		facet {
+			facet name: 'jst.web', type: Facet.FacetType.fixed
+			facet name: 'jst.java', type: Facet.FacetType.fixed
+			facet name: 'wst.jsdt.web', type: Facet.FacetType.fixed
+			facet name: 'jst.web', version: '3.1'
+			facet name: 'jst.java', version: '1.8'
+			facet name: 'wst.jsdt.web', version: '1.0'
+		}
+	}
+}
+task createWebDirs(dependsOn: createJavaDirs) << {
+	def webAppDir = file("$webAppDirName")
+	webAppDir.mkdirs()
+}
+
+task startup(dependsOn:createWebDirs) << {}

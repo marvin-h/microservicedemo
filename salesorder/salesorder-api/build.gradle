@@ -1,0 +1,4 @@
+dependencies {
+	compile group: 'io.swagger', name: 'swagger-jaxrs', version: swaggerVersion
+}
+task startup(dependsOn:createJavaDirs) << {}
