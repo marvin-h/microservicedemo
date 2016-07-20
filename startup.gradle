@@ -1,0 +1,149 @@
+
+ext {
+	subProjects = ['api','srv','web'] as String[]
+
+	junitVersion='4.11'
+	
+	//javaxWsRsVersion='2.0.1'
+	//javaxWsRs="compile group: 'javax.ws.rs', name: 'javax.ws.rs-api', version: javaxWsRsVersion"
+	swaggerVersion='1.5.0'
+	swaggerJaxrs="compile group: 'io.swagger', name: 'swagger-jaxrs', version: swaggerVersion"
+
+	springVersion='4.2.6.RELEASE'
+	springContext="compile group: 'org.springframework', name: 'spring-context', version: springVersion"
+	springWeb="compile group: 'org.springframework', name: 'spring-web', version: springVersion"
+
+	resteasyVersion='3.0.17.Final'
+	resteasySpring="compile group: 'org.jboss.resteasy', name: 'resteasy-spring', version: resteasyVersion"
+	resteasyJackson2="compile group: 'org.jboss.resteasy', name: 'resteasy-jackson2-provider', version: resteasyVersion"
+
+	createJavaDirsTask="task createJavaDirs << {\n" + 
+	"\tsourceSets*.java.srcDirs*.each { it.mkdirs() }\n" + 
+	"\tsourceSets*.resources.srcDirs*.each { it.mkdirs() }\n" + 
+	"}\n"
+
+	createWebDirsTask="task createWebDirs(dependsOn: createJavaDirs) << {\n" + 
+	'\tdef webAppDir = file("$webAppDirName")\n' + 
+	"\twebAppDir.mkdirs()\n" + 
+	"}\n"
+}
+
+task createProjectStruct << {
+	subProjects.each {
+		def projectFolder = project.name + '-' + it
+		new File(projectFolder).mkdirs()
+	}
+}
+
+task createRootBuildGradleFile << {
+	def f = new File('build.gradle')
+
+	if(f.exists())
+		f.delete()
+
+	f.withPrintWriter { printWriter->
+		printWriter.println("subprojects{")
+		printWriter.println("apply plugin: 'java'")
+		printWriter.println("apply plugin: 'eclipse'")
+		printWriter.println("repositories {")
+		printWriter.println("\tmavenCentral()")
+		printWriter.println("}")
+		printWriter.println("dependencies {")
+		printWriter.println("\ttestCompile group: 'junit', name: 'junit', version: junitVersion")
+		printWriter.println("}")
+		printWriter.println(createJavaDirsTask)
+		printWriter.println("}")
+
+		printWriter.println("task startup << {}")
+	}
+}
+
+task createSettingsFile << {
+	new File('settings.gradle').withPrintWriter { printWriter ->
+		subProjects.each {
+			def projectFolder = project.name + '-' + it
+			printWriter.println("include '" + projectFolder + "'")
+		}
+	}
+}
+
+task createPropertiesFile << {
+	new File('gradle.properties').withPrintWriter { printWriter ->
+		printWriter.println('junitVersion=' + junitVersion)
+		//printWriter.println('javaxWsRsVersion=' + javaxWsRsVersion)
+		printWriter.println('swaggerVersion=' + swaggerVersion)
+		printWriter.println('springVersion=' + springVersion)
+		printWriter.println('resteasyVersion=' + resteasyVersion)
+	}
+}
+
+task apiSubProject(dependsOn:[createProjectStruct,createRootBuildGradleFile,
+	createSettingsFile,createPropertiesFile]) << {
+	def subProject = 'api'
+	def projectFolder = project.name + '-' + subProject
+	def projectDepends = [swaggerJaxrs] as String []
+	new File(projectFolder + '/build.gradle').withPrintWriter { printWriter ->
+		printWriter.println('dependencies {')
+		projectDepends.each {
+			printWriter.println('\t' + it)
+		}
+		printWriter.println('}')
+		printWriter.println('task startup(dependsOn:createJavaDirs) << {}')
+	}
+}
+
+task serviceSubProject(dependsOn:[createProjectStruct,createRootBuildGradleFile,
+	createSettingsFile,createPropertiesFile]) << {
+	def subProject = 'srv'
+	def projectFolder = project.name + '-' + subProject
+	def projectDepends = [springContext] as String []
+
+	new File(projectFolder + '/build.gradle').withPrintWriter { printWriter ->
+		printWriter.println('dependencies {')
+		projectDepends.each {
+			printWriter.println('\t' + it)
+		}
+		printWriter.println('}')
+		printWriter.println('task startup(dependsOn:createJavaDirs) << {}')
+	}
+}
+
+task webSubProject(dependsOn:[createProjectStruct,createRootBuildGradleFile,
+	createSettingsFile,createPropertiesFile]) << {
+	def subProject = 'web'
+	def projectFolder = project.name + '-' + subProject
+	def projectDepends = [springWeb, resteasySpring, resteasyJackson2] as String []
+
+	new File(projectFolder + '/build.gradle').withPrintWriter { printWriter ->
+		printWriter.println('import org.gradle.plugins.ide.eclipse.model.Facet')
+		printWriter.println("apply plugin: 'war'")
+		printWriter.println("apply plugin: 'eclipse-wtp'")
+		printWriter.println('dependencies {')
+		printWriter.println("\tcompile project(':$project.name-api')")
+		printWriter.println("\tcompile project(':$project.name-srv')")
+		projectDepends.each {
+			printWriter.println('\t' + it)
+		}
+		printWriter.println('}')
+
+		printWriter.println("eclipse {")
+		printWriter.println("\twtp {")
+		printWriter.println("\t\tfacet {")
+		printWriter.println("\t\t\tfacet name: 'jst.web', type: Facet.FacetType.fixed")
+		printWriter.println("\t\t\tfacet name: 'jst.java', type: Facet.FacetType.fixed")
+		printWriter.println("\t\t\tfacet name: 'wst.jsdt.web', type: Facet.FacetType.fixed")
+		printWriter.println("\t\t\tfacet name: 'jst.web', version: '3.1'")
+		printWriter.println("\t\t\tfacet name: 'jst.java', version: '1.8'")
+		printWriter.println("\t\t\tfacet name: 'wst.jsdt.web', version: '1.0'")
+		printWriter.println("\t\t}")
+		printWriter.println("\t}")
+		printWriter.println("}")
+
+		printWriter.println(createWebDirsTask)
+		printWriter.println('task startup(dependsOn:createWebDirs) << {}')
+	}
+}
+
+task startup(dependsOn:[apiSubProject, serviceSubProject, webSubProject]) << {
+
+}
