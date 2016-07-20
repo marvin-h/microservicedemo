@@ -1,8 +1,8 @@
 dependencies {
+	compile project(':salesorder-api')
 	compile group: 'org.springframework.data', name: 'spring-data-jpa', version: springdatajpaVersion
 	compile group: 'org.apache.commons', name: 'commons-dbcp2', version: commonsdbcp2Version
 	compile group: 'org.eclipse.persistence', name: 'javax.persistence', version: jpaVersion
 	compile group: 'org.eclipse.persistence', name: 'eclipselink', version: eclipselinkVersion
-	compile project(':salesorder-api')
 }
 task startup(dependsOn:createJavaDirs) << {}
