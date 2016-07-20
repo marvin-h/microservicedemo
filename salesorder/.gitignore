@@ -16,5 +16,8 @@ gradlew.bat
 #project
 build
 bin
+create.sql
+drop.sql
+output.log
 
 
