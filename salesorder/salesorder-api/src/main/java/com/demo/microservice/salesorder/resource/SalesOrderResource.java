@@ -15,7 +15,7 @@ import io.swagger.annotations.ApiParam;
 @Path("/SalesOrder")
 @Produces("application/json")
 @Consumes("application/json")
-@Api("SalesOrder")
+@Api(value = "SalesOrder")
 public interface SalesOrderResource {
 	@GET
 	@Path("/{id}")
